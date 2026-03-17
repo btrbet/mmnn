@@ -7,14 +7,16 @@
 
 This project creates a NCAA DIV I Men's College Basketball Tournament bracket prediction using a neural network.
 
+This project was inspired by [this paper](https://github.com/btrbet/mmnn/blob/main/research/Comparing%20Various%20Machine%20Learning%20Statistical%20Methods%20Using%20Vari.pdf).
+
+Tournament data for 2010 - 2026 is included in the repository. If you'd like to add additional years of tournament data to the training dataset, use the `mmnn data fetch` command.
+
 ## Usage
 
-**Example workflow:**
+**Basic workflow:**
 ```bash
-mmnn data fetch 2024
-mmnn data process 2024
 mmnn nn train
-mmnn nn predict Duke UConn
+mmnn nn predict Duke Siena
 ```
 
 ### Fetch data
