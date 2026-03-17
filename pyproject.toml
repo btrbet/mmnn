@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mmnn"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "zach wick", email = "zach@btrbet.app" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "click",
+  "requests",
+  "beautifulsoup4",
+  "sportsipy",
+  "torch>=2.0.0",
+  "scikit-learn>=1.0.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0.0"]
+
+[project.scripts]
+mmnn = "mmnn.cli:mmnn"
+
+[project.urls]
+Documentation = "https://github.com/zach wick/mmnn#readme"
+Issues = "https://github.com/zach wick/mmnn/issues"
+Source = "https://github.com/zach wick/mmnn"
+
+[tool.hatch.version]
+path = "src/mmnn/__about__.py"
+
+[tool.hatch.envs.test]
+dependencies = [
+  ".[test]",
+]
+[tool.hatch.envs.test.scripts]
+test = "pytest {args:tests}"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/mmnn tests}"
+
+[tool.coverage.run]
+source_pkgs = ["mmnn", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/mmnn/__about__.py",
+]
+
+[tool.coverage.paths]
+mmnn = ["src/mmnn", "*/mmnn/src/mmnn"]
+tests = ["tests", "*/mmnn/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
