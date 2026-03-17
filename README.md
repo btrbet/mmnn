@@ -9,6 +9,21 @@ This project creates a NCAA DIV I Men's College Basketball Tournament bracket pr
 
 ## Usage
 
+**Example workflow:**
+```bash
+mmnn data fetch 2024
+mmnn data process 2024
+mmnn nn train
+mmnn nn predict Duke UConn
+```
+
+### Fetch data
+
+```
+mmnn data fetch <year>
+```
+Fetch the raw data for the given year.
+
 ### Process data
 
 Process raw data for a given year into the format needed by the neural network. Reads `data/YEAR-teams.csv` and `data/YEAR-games.csv`, then writes `data/YEAR-data.csv` with per-game delta features and a Winner label.
@@ -22,7 +37,7 @@ mmnn data process <year>
 hatch run mmnn data process 2025
 ```
 
-### Neural network
+### Train the neural network
 
 Train the model on all `data/*-data.csv` files (90% train / 10% test split), then save weights to `data/model.pt`:
 
@@ -30,36 +45,36 @@ Train the model on all `data/*-data.csv` files (90% train / 10% test split), the
 mmnn nn train
 ```
 
+### Use the neural network
+
 Predict which team wins (higher- or lower-ranked) given two team names. Team stats are looked up from `data/2026-teams.csv`:
 
 ```bash
 mmnn nn predict <team1> <team2>
+mmnn nn predict "Ohio State" TCU
 ```
-
-**Example workflow:**
-```bash
-mmnn data process 2024
-mmnn nn train
-mmnn nn predict Duke UConn
-```
-
-### Fetch data
-
-```
-mmnn data fetch <year>
-```
-Fetch the raw data for the given year.
-
-## Table of Contents
-
-- [Installation](#installation)
-- [License](#license)
+Look in `2026-teams.csv` for the correct team names to use.
 
 ## Installation
+
+**From PyPI (end users):**
 
 ```console
 pip install mmnn
 ```
+
+**From source (development):**
+
+This project uses [Hatch](https://hatch.pypa.io/) for dependency management and building. Clone the repo, then run commands without installing:
+
+```console
+hatch run mmnn data fetch 2024
+hatch run mmnn data process 2024
+hatch run mmnn nn train
+hatch run mmnn nn predict Duke UConn
+```
+
+Or install in editable mode: `pip install -e .`
 
 ## License
 
