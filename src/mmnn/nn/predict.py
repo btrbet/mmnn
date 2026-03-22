@@ -5,28 +5,28 @@ from pathlib import Path
 
 import torch
 
+from mmnn import paths
 from mmnn.nn.data import FEATURE_COLS
 from mmnn.nn.model import BracketPredictor
 
 MODEL_FILENAME = "model.pt"
 
 
-def _get_data_dir() -> Path:
-    """Resolve data directory relative to project root."""
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
-    return project_root / "data"
-
-
 def run_predict(
-    team1: str, team2: str, data_dir: Path | None = None, teams_path: Path | None = None
+    team1: str,
+    team2: str,
+    data_dir: Path | None = None,
+    teams_path: Path | None = None,
+    *,
+    women: bool = False,
 ) -> None:
     """
-    Load model, look up two teams by name in data/2026-teams.csv, compute deltas, predict HIGHER or LOWER.
+    Load model, look up two teams by name in data/men|women/2026-teams.csv, compute deltas, predict HIGHER or LOWER.
     """
     from mmnn.nn.data import compute_deltas_from_team_names
 
     if data_dir is None:
-        data_dir = _get_data_dir()
+        data_dir = paths.data_dir(women=women)
     model_path = data_dir / MODEL_FILENAME
     if not model_path.exists():
         raise SystemExit(f"Model not found: {model_path}. Run 'mmnn nn train' first.")
@@ -39,7 +39,7 @@ def run_predict(
     if teams_path is None:
         teams_path = data_dir / "2026-teams.csv"
     deltas, higher_row, lower_row = compute_deltas_from_team_names(
-        team1, team2, teams_path
+        team1, team2, teams_path, women=women
     )
     # Deltas are in FEATURE_COLS order; reorder if saved order differs (future-proofing)
     if list(feature_order) != list(FEATURE_COLS):

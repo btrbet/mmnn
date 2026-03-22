@@ -49,7 +49,7 @@ path = "src/mmnn/__about__.py"
 
 [tool.hatch.envs.test]
 dependencies = [
-  ".[test]",
+  "pytest>=7.0.0",
 ]
 [tool.hatch.envs.test.scripts]
 test = "pytest {args:tests}"

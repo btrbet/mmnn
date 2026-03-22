@@ -56,7 +56,7 @@ def test_compute_deltas_from_teams_file_row_order_independent() -> None:
 
 def test_compute_deltas_from_team_names() -> None:
     """compute_deltas_from_team_names looks up teams in 2026-teams.csv and returns 9 deltas."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     teams_path = data_dir / "2026-teams.csv"
     if not teams_path.exists():
         pytest.skip("2026-teams.csv not found")
@@ -70,7 +70,7 @@ def test_compute_deltas_from_team_names() -> None:
 
 def test_compute_deltas_from_team_names_case_insensitive() -> None:
     """Team name lookup is case-insensitive."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     teams_path = data_dir / "2026-teams.csv"
     if not teams_path.exists():
         pytest.skip("2026-teams.csv not found")
@@ -82,7 +82,7 @@ def test_compute_deltas_from_team_names_case_insensitive() -> None:
 
 def test_compute_deltas_from_team_names_raises_when_team_not_found() -> None:
     """compute_deltas_from_team_names raises if either team is not in the file."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     teams_path = data_dir / "2026-teams.csv"
     if not teams_path.exists():
         pytest.skip("2026-teams.csv not found")
@@ -93,7 +93,7 @@ def test_compute_deltas_from_team_names_raises_when_team_not_found() -> None:
 
 def test_load_all_data_rows() -> None:
     """load_all_data_rows returns rows from *-data.csv files."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     rows = load_all_data_rows(data_dir)
     if not rows:
         pytest.skip("No *-data.csv files found")
@@ -107,7 +107,7 @@ def test_load_all_data_rows() -> None:
 
 def test_rows_to_tensors() -> None:
     """rows_to_tensors extracts features and labels correctly."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     rows = load_all_data_rows(data_dir)
     if not rows:
         pytest.skip("No *-data.csv files found")
@@ -130,7 +130,7 @@ def test_bracket_predictor_forward() -> None:
 
 def test_nn_train_creates_model_file() -> None:
     """mmnn nn train runs and creates data/model.pt."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     rows = load_all_data_rows(data_dir)
     if not rows:
         pytest.skip("No *-data.csv files found")
@@ -143,7 +143,7 @@ def test_nn_train_creates_model_file() -> None:
 
 def test_nn_predict_outputs_high_or_low() -> None:
     """mmnn nn predict with two team names outputs Result line and metrics."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     model_path = data_dir / "model.pt"
     teams_path = data_dir / "2026-teams.csv"
     if not model_path.exists() or not teams_path.exists():

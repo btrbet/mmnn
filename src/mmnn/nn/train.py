@@ -8,18 +8,13 @@ from pathlib import Path
 import torch
 from sklearn.preprocessing import StandardScaler
 
+from mmnn import paths
 from mmnn.nn.data import FEATURE_COLS, load_all_data_rows, rows_to_tensors
 from mmnn.nn.model import BracketPredictor
 
 MODEL_FILENAME = "model.pt"
 DEFAULT_EPOCHS = 150
 SEED = 42
-
-
-def _get_data_dir() -> Path:
-    """Resolve data directory relative to project root."""
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
-    return project_root / "data"
 
 
 def _get_model_path(data_dir: Path) -> Path:
@@ -30,12 +25,14 @@ def run_train(
     data_dir: Path | None = None,
     epochs: int = DEFAULT_EPOCHS,
     train_frac: float = 0.9,
+    *,
+    women: bool = False,
 ) -> None:
     """
     Load all YEAR-data.csv rows, shuffle, split 90/10, train model, save weights and scaler.
     """
     if data_dir is None:
-        data_dir = _get_data_dir()
+        data_dir = paths.data_dir(women=women)
 
     rows = load_all_data_rows(data_dir)
     if not rows:

@@ -14,9 +14,23 @@ import requests
 from bs4 import BeautifulSoup
 from sportsipy.ncaab.teams import Team, Teams
 
+from mmnn import paths
+
 BASE_URL = "https://www.sports-reference.com"
-TOURNAMENT_URL = f"{BASE_URL}/cbb/postseason/men/{{year}}-ncaa.html"
-SCHOOL_STATS_URL = f"{BASE_URL}/cbb/seasons/men/{{year}}-school-stats.html"
+
+
+def _gender_segment(women: bool) -> str:
+    return "women" if women else "men"
+
+
+def _tournament_url(year: int, women: bool) -> str:
+    g = _gender_segment(women)
+    return f"{BASE_URL}/cbb/postseason/{g}/{year}-ncaa.html"
+
+
+def _school_stats_url(year: int, women: bool) -> str:
+    g = _gender_segment(women)
+    return f"{BASE_URL}/cbb/seasons/{g}/{year}-school-stats.html"
 
 # Sports Reference school_id -> sportsipy abbreviation (for teams that don't match by name)
 SCHOOL_ID_TO_ABBR: dict[str, str] = {
@@ -86,21 +100,17 @@ class BracketGame:
     team2: BracketTeam
 
 
-def _get_data_dir() -> Path:
-    """Resolve data directory relative to project root."""
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
-    return project_root / "data"
-
-
-def _fetch_tournament_page(year: int) -> str:
+def _fetch_tournament_page(year: int, women: bool) -> str:
     """Fetch the NCAA tournament bracket page HTML."""
-    url = TOURNAMENT_URL.format(year=year)
+    url = _tournament_url(year, women)
     resp = requests.get(url, timeout=30)
     resp.raise_for_status()
     return resp.text
 
 
-def _parse_bracket(html: str, year: int) -> tuple[list[BracketGame], dict[str, int], dict[str, str]]:
+def _parse_bracket(
+    html: str, year: int, women: bool
+) -> tuple[list[BracketGame], dict[str, int], dict[str, str]]:
     """
     Parse bracket HTML to extract games, team seeds, and school IDs.
 
@@ -116,7 +126,8 @@ def _parse_bracket(html: str, year: int) -> tuple[list[BracketGame], dict[str, i
 
     # Pattern: seed, school link (team name), boxscore link (score)
     # Find all links to schools and boxscores in the bracket area
-    school_pattern = re.compile(r"/cbb/schools/([^/]+)/men/(\d+)\.html")
+    g = _gender_segment(women)
+    school_pattern = re.compile(rf"/cbb/schools/([^/]+)/{g}/(\d+)\.html")
     boxscore_pattern = re.compile(r"/cbb/boxscores/")
 
     # Get main content - bracket is typically in #content or similar
@@ -231,9 +242,15 @@ def _parse_bracket(html: str, year: int) -> tuple[list[BracketGame], dict[str, i
     return games, team_seeds, team_school_ids
 
 
-def _build_team_lookup(year: int) -> dict[str, "object"]:
-    """Build mapping from team display names to sportsipy Team objects."""
+def _build_team_lookup(year: int, women: bool) -> dict[str, "object"]:
+    """Build mapping from team display names to sportsipy Team objects (men's only)."""
     lookup: dict[str, object] = {}
+    if women:
+        print(
+            "Women's mode: using Sports Reference stats only (sportsipy is men's D-I).",
+            file=sys.stderr,
+        )
+        return lookup
     try:
         with redirect_stderr(io.StringIO()):
             teams = Teams(year)
@@ -277,13 +294,14 @@ def _build_team_lookup(year: int) -> dict[str, "object"]:
     return lookup
 
 
-def _scrape_team_stats(year: int) -> dict[str, dict]:
+def _scrape_team_stats(year: int, women: bool) -> dict[str, dict]:
     """
     Scrape team stats from Sports Reference school-stats page.
     TS%, TOV%, and AST% are calculated from basic stats (not on the page).
     Returns dict mapping school_id -> stats dict (compatible with _team_to_row).
     """
-    school_pattern = re.compile(r"/cbb/schools/([^/]+)/men/(\d+)\.html")
+    g = _gender_segment(women)
+    school_pattern = re.compile(rf"/cbb/schools/([^/]+)/{g}/(\d+)\.html")
     result: dict[str, dict] = {}
 
     def _parse_float(s: str) -> float:
@@ -332,7 +350,7 @@ def _scrape_team_stats(year: int) -> dict[str, dict]:
         ("pts", "points", "int"), ("tm", "points", "int"),  # pts/tm = team total points
     ]
     try:
-        resp = requests.get(SCHOOL_STATS_URL.format(year=year), timeout=30)
+        resp = requests.get(_school_stats_url(year, women), timeout=30)
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"Warning: Could not scrape team stats: {e}", file=sys.stderr)
@@ -368,11 +386,9 @@ def _scrape_team_stats(year: int) -> dict[str, dict]:
 
 
 def _resolve_team(
-    team: BracketTeam, lookup: dict[str, object], year: int
+    team: BracketTeam, lookup: dict[str, object], year: int, women: bool
 ) -> object | None:
-    """Resolve bracket team to sportsipy Team object."""
-    from sportsipy.ncaab.teams import Team
-
+    """Resolve bracket team to sportsipy Team object or None (use scraped stats after)."""
     name = team.name.strip()
     # Try aliases first
     canonical = BRACKET_NAME_ALIASES.get(name, name)
@@ -384,7 +400,11 @@ def _resolve_team(
     for key, t in lookup.items():
         if key in name or name in key:
             return t
-    # Fallback: try Team(abbreviation, year) using school_id
+    if women:
+        return None
+    from sportsipy.ncaab.teams import Team
+
+    # Fallback: try Team(abbreviation, year) using school_id (men's sportsipy only)
     school_id = (team.school_id or "").strip().lower()
     if school_id:
         abbr = SCHOOL_ID_TO_ABBR.get(school_id)
@@ -411,7 +431,13 @@ def _get_stat(obj: object, key: str, default: float | int = 0) -> float | int:
 
 
 def _team_to_row(
-    team_obj: object, team_name: str, seed: int, year: int, row_id: int, school_id: str
+    team_obj: object,
+    team_name: str,
+    seed: int,
+    year: int,
+    row_id: int,
+    school_id: str,
+    women: bool,
 ) -> dict:
     """Convert sportsipy Team or scraped stats dict to CSV row dict."""
     gp = _get_stat(team_obj, "games_played", 1) or 1
@@ -423,7 +449,8 @@ def _team_to_row(
     ts_pct = _get_stat(team_obj, "true_shooting_percentage", 0)
     tov_pct = _get_stat(team_obj, "turnover_percentage", 0)
     ast_pct = _get_stat(team_obj, "assist_percentage", 0)
-    url = f"{BASE_URL}/cbb/schools/{school_id}/men/{year}.html"
+    g = _gender_segment(women)
+    url = f"{BASE_URL}/cbb/schools/{school_id}/{g}/{year}.html"
     return {
         "ID": row_id,
         "Year": year,
@@ -448,29 +475,29 @@ def _team_to_row(
     }
 
 
-def fetch_year(year: int, data_dir: Path | None = None) -> None:
+def fetch_year(year: int, data_dir: Path | None = None, *, women: bool = False) -> None:
     """
     Fetch NCAA tournament data for the specified year.
 
-    Fetches bracket from Sports Reference, uses sportsipy for team stats,
-    and writes YEAR-teams.csv and YEAR-games.csv.
+    Fetches bracket from Sports Reference, uses sportsipy for men's team stats,
+    and writes YEAR-teams.csv and YEAR-games.csv under data/men or data/women.
     """
     if data_dir is None:
-        data_dir = _get_data_dir()
+        data_dir = paths.data_dir(women=women)
     data_dir.mkdir(parents=True, exist_ok=True)
 
     if year < 2002 or year > 2030:
         raise ValueError(f"Year {year} out of supported range (2002-2030)")
 
     print(f"Fetching tournament bracket for {year}...", file=sys.stderr)
-    html = _fetch_tournament_page(year)
-    games, team_seeds, team_school_ids = _parse_bracket(html, year)
+    html = _fetch_tournament_page(year, women)
+    games, team_seeds, team_school_ids = _parse_bracket(html, year, women)
 
     print(f"Building team lookup via sportsipy...", file=sys.stderr)
-    lookup = _build_team_lookup(year)
+    lookup = _build_team_lookup(year, women)
 
     print(f"Scraping team stats from Sports Reference...", file=sys.stderr)
-    scraped_stats = _scrape_team_stats(year)
+    scraped_stats = _scrape_team_stats(year, women)
 
     # Dedupe teams by display name, keep best (lowest) seed
     teams_seen: set[str] = set()
@@ -481,7 +508,7 @@ def fetch_year(year: int, data_dir: Path | None = None) -> None:
             continue
         school_id = team_school_ids.get(team_name, "").strip().lower()
         bt = BracketTeam(name=team_name, seed=seed, school_id=school_id, score=None)
-        team_obj = _resolve_team(bt, lookup, year)
+        team_obj = _resolve_team(bt, lookup, year, women)
         if team_obj is None and school_id and school_id in scraped_stats:
             team_obj = scraped_stats[school_id]
         if team_obj is None:
@@ -497,7 +524,7 @@ def fetch_year(year: int, data_dir: Path | None = None) -> None:
     teams_path = data_dir / f"{year}-teams.csv"
     teams_rows: list[dict] = []
     for idx, (team_name, seed, team_obj, school_id) in enumerate(teams_data, 1):
-        row = _team_to_row(team_obj, team_name, seed, year, idx, school_id)
+        row = _team_to_row(team_obj, team_name, seed, year, idx, school_id, women)
         teams_rows.append(row)
     with teams_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=TEAMS_CSV_COLUMNS)

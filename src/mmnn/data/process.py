@@ -5,6 +5,8 @@ import csv
 import sys
 from pathlib import Path
 
+from mmnn import paths
+
 # Common team name typos in games CSV (games -> teams)
 TEAM_NAME_ALIASES = {
     "Houson": "Houston",
@@ -23,13 +25,6 @@ OUTPUT_COLUMNS = [
     "Δ TOV%",
     "Δ AST%",
 ]
-
-
-def _get_data_dir() -> Path:
-    """Resolve data directory relative to project root (parent of src/)."""
-    # process.py lives at src/mmnn/data/process.py -> 4 levels up to project root
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
-    return project_root / "data"
 
 
 def _load_teams(data_dir: Path, year: int) -> dict[str, dict]:
@@ -101,15 +96,15 @@ def compute_deltas_for_two_teams(row1: dict, row2: dict) -> tuple[list[float], d
     return _compute_deltas(higher, lower), higher, lower
 
 
-def process_year(year: int, data_dir: Path | None = None) -> None:
+def process_year(year: int, data_dir: Path | None = None, *, women: bool = False) -> None:
     """
     Process raw data for the specified year.
 
-    Reads data/{year}-teams.csv and data/{year}-games.csv, joins them to compute
-    per-game deltas and Winner label, and writes data/{year}-data.csv.
+    Reads data/men|women/{year}-teams.csv and {year}-games.csv, joins them to compute
+    per-game deltas and Winner label, and writes {year}-data.csv in the same folder.
     """
     if data_dir is None:
-        data_dir = _get_data_dir()
+        data_dir = paths.data_dir(women=women)
 
     teams = _load_teams(data_dir, year)
     games_path = data_dir / f"{year}-games.csv"

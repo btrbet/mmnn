@@ -6,7 +6,7 @@ import click
 
 @click.group()
 def mmnn():
-    """NCAA Division I Men's College Basketball Tournament bracket prediction."""
+    """NCAA Division I college basketball tournament bracket prediction (men's or women's)."""
     pass
 
 
@@ -16,22 +16,27 @@ def data():
     pass
 
 
+WOMEN_HELP = "Use NCAA Women's tournament data (data/women; Sports Reference women's URLs)."
+
+
 @data.command()
 @click.argument("year", type=int)
-def fetch(year: int) -> None:
+@click.option("-w", "--women", is_flag=True, help=WOMEN_HELP)
+def fetch(year: int, women: bool) -> None:
     """Fetch NCAA tournament data for the specified year from Sports Reference."""
     from mmnn.data.fetch import fetch_year
 
-    fetch_year(year)
+    fetch_year(year, women=women)
 
 
 @data.command()
 @click.argument("year", type=int)
-def process(year: int) -> None:
+@click.option("-w", "--women", is_flag=True, help=WOMEN_HELP)
+def process(year: int, women: bool) -> None:
     """Process raw data for the specified year."""
     from mmnn.data.process import process_year
 
-    process_year(year)
+    process_year(year, women=women)
 
 
 @mmnn.group()
@@ -41,18 +46,20 @@ def nn():
 
 
 @nn.command()
-def train() -> None:
-    """Train the neural network and save weights to data/model.pt."""
+@click.option("-w", "--women", is_flag=True, help=WOMEN_HELP)
+def train(women: bool) -> None:
+    """Train the neural network and save weights to data/men/model.pt or data/women/model.pt."""
     from mmnn.nn.train import run_train
 
-    run_train()
+    run_train(women=women)
 
 
 @nn.command()
 @click.argument("team1", type=str)
 @click.argument("team2", type=str)
-def predict(team1: str, team2: str) -> None:
-    """Predict which team wins. Team stats are looked up from data/2026-teams.csv."""
+@click.option("-w", "--women", is_flag=True, help=WOMEN_HELP)
+def predict(team1: str, team2: str, women: bool) -> None:
+    """Predict which team wins. Team stats are looked up from data/men|women/2026-teams.csv."""
     from mmnn.nn.predict import run_predict
 
-    run_predict(team1, team2)
+    run_predict(team1, team2, women=women)

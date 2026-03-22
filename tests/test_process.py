@@ -12,7 +12,7 @@ from mmnn.data.process import OUTPUT_COLUMNS, process_year
 def test_process_year_creates_output_file(tmp_path: Path) -> None:
     """process_year creates {year}-data.csv in the data directory."""
     # Use bundled sample data by resolving from package
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     if not (data_dir / "2025-teams.csv").exists():
         pytest.skip("Sample data not found; run from project root")
     if not (data_dir / "2025-games.csv").exists():
@@ -26,7 +26,7 @@ def test_process_year_creates_output_file(tmp_path: Path) -> None:
 
 def test_process_year_output_has_expected_header(tmp_path: Path) -> None:
     """Output CSV has the expected column headers."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     if not (data_dir / "2025-teams.csv").exists():
         pytest.skip("Sample data not found; run from project root")
 
@@ -39,7 +39,7 @@ def test_process_year_output_has_expected_header(tmp_path: Path) -> None:
 
 def test_process_year_output_row_count_matches_games(tmp_path: Path) -> None:
     """Output row count equals number of games (all teams resolvable)."""
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     if not (data_dir / "2025-games.csv").exists():
         pytest.skip("Sample data not found; run from project root")
 
@@ -60,7 +60,7 @@ def test_process_year_first_game_values() -> None:
     Both Rank 16; tiebreak SRS: American -7.63 > Mount St. Mary's -7.91.
     So American is higher-ranked. Mount St. Mary's won -> Winner=LOWER.
     '''
-    data_dir = Path(__file__).resolve().parent.parent / "data"
+    data_dir = Path(__file__).resolve().parent.parent / "data" / "men"
     if not (data_dir / "2025-teams.csv").exists():
         pytest.skip("Sample data not found; run from project root")
 

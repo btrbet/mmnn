@@ -4,24 +4,19 @@
 import csv
 from pathlib import Path
 
+from mmnn import paths
 from mmnn.data.process import OUTPUT_COLUMNS, compute_deltas_for_two_teams
 
 FEATURE_COLS = [c for c in OUTPUT_COLUMNS if c != "Winner"]
 
 
-def _get_data_dir() -> Path:
-    """Resolve data directory relative to project root."""
-    project_root = Path(__file__).resolve().parent.parent.parent.parent
-    return project_root / "data"
-
-
-def load_all_data_rows(data_dir: Path | None = None) -> list[dict]:
+def load_all_data_rows(data_dir: Path | None = None, *, women: bool = False) -> list[dict]:
     """
     Glob data/*-data.csv, load all rows, return list of dicts.
     Filters out rows with invalid numeric values.
     """
     if data_dir is None:
-        data_dir = _get_data_dir()
+        data_dir = paths.data_dir(women=women)
     rows: list[dict] = []
     for path in sorted(data_dir.glob("*-data.csv")):
         with path.open(newline="", encoding="utf-8") as f:
@@ -72,16 +67,20 @@ def _resolve_team_by_name(lookup: dict[str, dict], name: str) -> dict | None:
 
 
 def compute_deltas_from_team_names(
-    team1: str, team2: str, teams_path: Path | None = None
+    team1: str,
+    team2: str,
+    teams_path: Path | None = None,
+    *,
+    women: bool = False,
 ) -> tuple[list[float], dict, dict]:
     """
     Look up two teams by name in teams CSV, compute delta features.
     Returns (deltas, higher_row, lower_row) where deltas is the 9-dimensional
     feature vector (higher - lower).
-    Uses data/2026-teams.csv by default.
+    Uses data/men|women/2026-teams.csv by default.
     """
     if teams_path is None:
-        teams_path = _get_data_dir() / "2026-teams.csv"
+        teams_path = paths.data_dir(women=women) / "2026-teams.csv"
     teams_path = Path(teams_path)
     if not teams_path.exists():
         raise FileNotFoundError(f"Teams file not found: {teams_path}")
