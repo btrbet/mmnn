@@ -55,6 +55,26 @@ def train(women: bool) -> None:
 
 
 @nn.command()
+@click.argument("year", type=int)
+@click.option("-w", "--women", is_flag=True, help=WOMEN_HELP)
+@click.option(
+    "--epochs",
+    type=int,
+    default=None,
+    help="Training epochs when fitting on other years (default: same as mmnn nn train).",
+)
+def bracket(year: int, women: bool, epochs: int | None) -> None:
+    """Predict each game in the year's bracket; print per-game results and evaluation metrics.
+
+    Retrains on all *-data.csv rows except this year, then evaluates on {year}-games.csv
+    (holdout for that tournament).
+    """
+    from mmnn.nn.bracket import run_bracket
+
+    run_bracket(year, women=women, epochs=epochs)
+
+
+@nn.command()
 @click.argument("team1", type=str)
 @click.argument("team2", type=str)
 @click.option("-w", "--women", is_flag=True, help=WOMEN_HELP)
