@@ -10,15 +10,24 @@ from mmnn.data.process import OUTPUT_COLUMNS, compute_deltas_for_two_teams
 FEATURE_COLS = [c for c in OUTPUT_COLUMNS if c != "Winner"]
 
 
-def load_all_data_rows(data_dir: Path | None = None, *, women: bool = False) -> list[dict]:
+def load_all_data_rows(
+    data_dir: Path | None = None,
+    *,
+    women: bool = False,
+    exclude_year: int | None = None,
+) -> list[dict]:
     """
-    Glob data/*-data.csv, load all rows, return list of dicts.
+    Glob *-data.csv under data/men or data/women, load all rows, return list of dicts.
     Filters out rows with invalid numeric values.
+
+    If exclude_year is set, skip ``{exclude_year}-data.csv`` (for holdout training).
     """
     if data_dir is None:
         data_dir = paths.data_dir(women=women)
     rows: list[dict] = []
     for path in sorted(data_dir.glob("*-data.csv")):
+        if exclude_year is not None and path.name == f"{exclude_year}-data.csv":
+            continue
         with path.open(newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
