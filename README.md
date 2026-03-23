@@ -5,15 +5,19 @@
 
 -----
 
-This project creates NCAA Division I college basketball tournament bracket predictions using a neural network (men's or women's).
+This project creates NCAA Division I college basketball tournament bracket predictions (men's or women's) using a neural network.
 
-This project was inspired by [this paper](https://github.com/btrbet/mmnn/blob/main/research/Comparing%20Various%20Machine%20Learning%20Statistical%20Methods%20Using%20Vari.pdf).
+## Inspiration
+
+The starting point is a student research paper in [`research/`](research/)—[*Comparing Various Machine Learning Statistical Methods Using Vari*](research/Comparing%20Various%20Machine%20Learning%20Statistical%20Methods%20Using%20Vari.pdf)—that **compares several machine learning and classical statistical approaches** to predicting NCAA Division I basketball tournament outcomes from **team-level statistics**. The paper frames the problem as a classification task (e.g. which side of a matchup wins) and evaluates how different estimators behave on that data.
+
+**mmnn** turns that idea into a small, usable codebase: it fetches and normalizes tournament data, builds the same style of stat-based features, trains a **neural network** as one such model, and adds commands to score a full bracket (holdout year) or a single head-to-head matchup. Men’s and women’s tournaments are both supported.
 
 Tournament data for 2010–2026 (men's) is included under `data/men/`. To add more years, use `mmnn data fetch`. Use `-w` / `--women` on `mmnn data …` and `mmnn nn …` to use women's data under `data/women/` (Sports Reference URLs use `women` instead of `men` in the path).
 
 ## Usage
 
-**Basic workflow (men's, default):** Processed `*-data.csv` files are already in `data/men/`, so you can train immediately. To add or refresh a year, run `mmnn data fetch <year>` and `mmnn data process <year>` first.
+**Basic workflow (men's, default):** Processed `*-data.csv` files are already in `data/men/` and `data/women/`, so you can train immediately. To add or refresh a year, run `mmnn data fetch <year>` and `mmnn data process <year>` first.
 
 ```bash
 mmnn nn train
